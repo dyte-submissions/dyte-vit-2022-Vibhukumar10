@@ -5,16 +5,7 @@ const boxen = require('boxen')
 const yargs = require('yargs')
 const { Octokit } = require('@octokit/rest')
 const { compare, validate } = require('compare-versions')
-const { default: simpleGit, CleanOptions } = require('simple-git')
-simpleGit().clean(CleanOptions.FORCE)
-
-const options = {
-  baseDir: process.cwd(),
-  binary: 'git',
-  maxConcurrentProcesses: 6,
-}
-
-const git = simpleGit(options)
+const prompt = require('prompt-sync')()
 
 const csv = require('csvtojson')
 
@@ -47,12 +38,15 @@ const argv = yargs(process.argv.slice(2))
   })
   .help(true).argv
 
+// ROUTES ------>
+
 if (argv.i && argv.r == null) {
   const csvFileName = argv.i[0]
   try {
     const csvPath = utils.getCsvPath(csvFileName)
     ;(async () => {
       const data = await csv().fromFile(csvPath)
+
       console.log(data)
     })()
   } catch (err) {
@@ -63,54 +57,76 @@ if (argv.i && argv.r == null) {
   try {
     const getUrl = utils.getGithubApiCall(url)
     const [dependency, version] = argv.r[1].split('@')
-    console.log(dependency, version)
+    // console.log(dependency, version)
 
     if (!validate(version)) {
       throw new Error('Please enter a valid version like: react@17.0.0')
     }
 
-    const oldContent = utils
-      .getOldContent('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', url)
-      .then((data) => data)
-
     utils
       .getDependencyList(getUrl)
       .then((data) => {
-        console.log(data)
-        var appVersion = utils.getAppVersion(data, dependency).toString()
+        // console.log(data)
+        // JSON.parse(Buffer.from(data, 'base64').toString('ascii'))
+        //   .dependencies
+        const appVersion = utils
+          .getAppVersion(
+            JSON.parse(
+              Buffer.from(data.data.content, 'base64').toString('ascii')
+            ).dependencies,
+            dependency,
+            version
+          )
+          .toString()
 
-        console.log(`\nShowing dependency versions for ${dependency}:`)
-        console.log(
-          chalk.blue(boxen(`current: ${appVersion}\nrequirement: ${version}`))
+        var newPackage = JSON.parse(
+          Buffer.from(data.data.content, 'base64').toString('ascii')
         )
 
-        if (!compare(appVersion, version, '>=')) {
-          console.log(
-            chalk.red(
-              `${dependency}@${appVersion} DOESNOT satisfy ${dependency}@${version}\nPlease update using the -u flag`
-            )
-          )
-        } else {
-          console.log(chalk.green('Your dependency is upto date :)'))
-        }
-
         if (argv.u) {
-          const accessToken = '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'
-          try {
-            ;(async () => {
-              // const data = await csv().fromFile(csvPath)
-              await utils.forkRepo(accessToken, url)
-              console.log('forked')
-              await utils.createBranch(accessToken, url, 'Vibhukumar10')
-              console.log('branch created')
-              await utils.makeChanges(accessToken, url)
-              console.log('changes made')
-              await utils.createPullRequest(accessToken, url)
-              console.log('pull request made')
-            })()
-          } catch (err) {
-            console.log(err.message)
+          var accessToken = prompt(
+            'Please enter your GitHub Person Access Token: '
+          )
+          var userName = prompt('Please enter your GitHub Username: ')
+
+          var obj = newPackage.dependencies
+          for (var key in newPackage.dependencies) {
+            if (obj.hasOwnProperty(key) && key === dependency) {
+              newPackage.dependencies[key] = '^' + version
+              break
+            }
           }
+
+          // console.log(toString())
+          newPackage = btoa(JSON.stringify(newPackage))
+          // console.log(newPackage)
+          const genRand = (len) => {
+            return Math.random()
+              .toString(36)
+              .substring(2, len + 2)
+          }
+          const rand = genRand(5)
+          ;(async () => {
+            await utils.forkRepo(accessToken, url)
+            await utils.createBranch(rand, accessToken, url, userName)
+            await utils.makeChanges(
+              rand,
+              accessToken,
+              url,
+              newPackage,
+              data.data.sha
+            )
+            await utils.createPullRequest(
+              rand,
+              accessToken,
+              url,
+              dependency,
+              appVersion,
+              version,
+              userName
+            )
+            console.log('pull request made :)')
+          })()
         }
       })
       .catch((err) => {
