@@ -36,7 +36,7 @@ rely -r https://github.com/dyte-in/react-sample-app/ react@18.0.0 -u
 This will generate a Pull Request in the source repository with the desired updates in dependecy versions.
 
 Sample Response:
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+[![Product Name Screen Shot][product-screenshot]](https://github.com/dyte-submissions/dyte-vit-2022-Vibhukumar10/blob/c475bca6602eed8632bb0c43f71e0055386b5144/images/Demo.gif)
 
 ## My Socials
 
