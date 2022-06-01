@@ -39,7 +39,7 @@ Sample Response:
 
 <a href="https://github.com/dyte-submissions/dyte-vit-2022-Vibhukumar10/blob/66964240e2c1c7455f0b3fa40f97a6d37c814c5d/images/Demo.gif" target="blank"><img align="center" src="https://github.com/dyte-submissions/dyte-vit-2022-Vibhukumar10/blob/66964240e2c1c7455f0b3fa40f97a6d37c814c5d/images/Demo.gif" alt="demo" /></a>
 
-## My Socials
+## Contact Me
 
 <p align="center">
 <a href="https://linkedin.com/in/https://www.linkedin.com/in/vibhu-kumar-singh" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/linked-in-alt.svg" alt="https://www.linkedin.com/in/vibhu-kumar-singh" height="30" width="40" /></a>
