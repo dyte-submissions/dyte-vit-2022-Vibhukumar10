@@ -37,7 +37,7 @@ This will generate a Pull Request in the source repository with the desired upda
 
 Sample Response:
 
-<a href="https://github.com/dyte-submissions/dyte-vit-2022-Vibhukumar10/blob/c475bca6602eed8632bb0c43f71e0055386b5144/images/Demo.gif" target="blank"><img align="center" src="https://github.com/dyte-submissions/dyte-vit-2022-Vibhukumar10/blob/c475bca6602eed8632bb0c43f71e0055386b5144/images/Demo.gif" alt="demo" /></a>
+<a href="https://github.com/dyte-submissions/dyte-vit-2022-Vibhukumar10/blob/66964240e2c1c7455f0b3fa40f97a6d37c814c5d/images/Demo.gif" target="blank"><img align="center" src="https://github.com/dyte-submissions/dyte-vit-2022-Vibhukumar10/blob/66964240e2c1c7455f0b3fa40f97a6d37c814c5d/images/Demo.gif" alt="demo" /></a>
 
 ## My Socials
 
