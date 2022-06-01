@@ -6,14 +6,9 @@ const yargs = require('yargs')
 const { Octokit } = require('@octokit/rest')
 const { compare, validate } = require('compare-versions')
 const prompt = require('prompt-sync')()
-
 const csv = require('csvtojson')
-
 const utils = require('./utils.js')
-
-const usage = chalk.keyword('green')(
-  '\nUsage: rely <repo-url> <dependency@version>'
-)
+const usage = chalk.keyword('green')('\nUsage: rely <repo-url> <dependency@version>')
 
 const argv = yargs(process.argv.slice(2))
   .usage(
@@ -42,13 +37,34 @@ const argv = yargs(process.argv.slice(2))
 
 if (argv.i && argv.r == null) {
   const csvFileName = argv.i[0]
+  const [dependency, version] = argv.i[1].split('@')
   try {
     const csvPath = utils.getCsvPath(csvFileName)
-    ;(async () => {
+    ;async () => {
       const data = await csv().fromFile(csvPath)
+      var rep = []
+      data.forEach((obj) => {
+        console.log(obj)
+        const getUrl = utils.getGithubApiCall(obj.repo)
 
-      console.log(data)
-    })()
+        utils.getDependencyList(getUrl).then((content) => {
+          const appVersion = utils
+            .getAppVersion(
+              JSON.parse(Buffer.from(content.data.content, 'base64').toString('ascii'))
+                .dependencies,
+              dependency,
+              version
+            )
+            .toString()
+
+          rep.push({
+            version: appVersion,
+            satified: compare(appVersion, version, '>='),
+          })
+        })
+        console.log(rep)
+      })
+    }
   } catch (err) {
     console.log(boxen(chalk.red(err.message)))
   }
@@ -57,7 +73,6 @@ if (argv.i && argv.r == null) {
   try {
     const getUrl = utils.getGithubApiCall(url)
     const [dependency, version] = argv.r[1].split('@')
-    // console.log(dependency, version)
 
     if (!validate(version)) {
       throw new Error('Please enter a valid version like: react@17.0.0')
@@ -66,27 +81,18 @@ if (argv.i && argv.r == null) {
     utils
       .getDependencyList(getUrl)
       .then((data) => {
-        // console.log(data)
-        // JSON.parse(Buffer.from(data, 'base64').toString('ascii'))
-        //   .dependencies
         const appVersion = utils
           .getAppVersion(
-            JSON.parse(
-              Buffer.from(data.data.content, 'base64').toString('ascii')
-            ).dependencies,
+            JSON.parse(Buffer.from(data.data.content, 'base64').toString('ascii')).dependencies,
             dependency,
             version
           )
           .toString()
 
-        var newPackage = JSON.parse(
-          Buffer.from(data.data.content, 'base64').toString('ascii')
-        )
+        var newPackage = JSON.parse(Buffer.from(data.data.content, 'base64').toString('ascii'))
 
         if (argv.u) {
-          var accessToken = prompt(
-            'Please enter your GitHub Person Access Token: '
-          )
+          var accessToken = prompt('Please enter your GitHub Person Access Token: ')
           var userName = prompt('Please enter your GitHub Username: ')
 
           var obj = newPackage.dependencies
@@ -97,9 +103,7 @@ if (argv.i && argv.r == null) {
             }
           }
 
-          // console.log(toString())
           newPackage = btoa(JSON.stringify(newPackage))
-          // console.log(newPackage)
           const genRand = (len) => {
             return Math.random()
               .toString(36)
@@ -109,23 +113,12 @@ if (argv.i && argv.r == null) {
           ;(async () => {
             await utils.forkRepo(accessToken, url)
             await utils.createBranch(rand, accessToken, url, userName)
-            await utils.makeChanges(
-              rand,
-              accessToken,
-              url,
-              newPackage,
-              data.data.sha
-            )
-            await utils.createPullRequest(
-              rand,
-              accessToken,
-              url,
-              dependency,
-              appVersion,
-              version,
-              userName
-            )
-            console.log('pull request made :)')
+            await utils.makeChanges(rand, accessToken, url, newPackage, data.data.sha)
+            await utils
+              .createPullRequest(rand, accessToken, url, dependency, appVersion, version, userName)
+              .then((obj) => console.log(boxen(chalk.green(`Your PR Link: `, obj.data.html_url))))
+
+            console.log('Pull request made :)')
           })()
         }
       })

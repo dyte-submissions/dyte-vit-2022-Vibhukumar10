@@ -3,9 +3,7 @@ const chalk = require('chalk')
 const csv = require('csvtojson')
 
 const axios = require('axios')
-const usage = chalk.hex('#83aaff')(
-  '\nUsage: rely <repo-url> <dependency@version>'
-)
+const usage = chalk.hex('#83aaff')('\nUsage: rely <repo-url> <dependency@version>')
 
 const { Octokit } = require('@octokit/rest')
 
@@ -15,7 +13,6 @@ const boxen = require('boxen')
 
 const getGithubApiCall = (url) => {
   const { owner, name } = gh(url)
-  console.log(owner, name)
 
   if (!owner || !name) {
     throw new Error('This is not a valid github link!')
@@ -31,14 +28,11 @@ const getDependencyList = async (url) => {
     // auth: accessToken,
   })
 
-  const obj = await octokit.request(
-    'GET /repos/{owner}/{repo}/contents/{path}',
-    {
-      owner: owner,
-      repo: name,
-      path: 'package.json',
-    }
-  )
+  const obj = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', {
+    owner: owner,
+    repo: name,
+    path: 'package.json',
+  })
 
   // JSON.parse(Buffer.from(obj.data.content, 'base64').toString('ascii'))
   //   .dependencies
@@ -59,9 +53,7 @@ const getAppVersion = (obj, dependency, version) => {
   }
 
   console.log(`\nShowing dependency versions for ${dependency}:`)
-  console.log(
-    chalk.blue(boxen(`current: ${appVersion}\nrequirement: ${version}`))
-  )
+  console.log(chalk.blue(boxen(`current: ${appVersion}\nrequirement: ${version}`)))
 
   if (!compare(appVersion, version, '>=')) {
     console.log(
@@ -79,16 +71,8 @@ const getAppVersion = (obj, dependency, version) => {
 const showHelp = () => {
   console.log(usage)
   console.log('\nOptions:\r')
-  console.log(
-    '\t--version\t      ' + 'Show version number.' + '\t\t' + '[boolean]\r'
-  )
-  console.log(
-    '    -i, --inp\t' +
-      '      ' +
-      'Take input from a .csv file' +
-      '\t\t' +
-      '[boolean]\r'
-  )
+  console.log('\t--version\t      ' + 'Show version number.' + '\t\t' + '[boolean]\r')
+  console.log('    -i, --inp\t' + '      ' + 'Take input from a .csv file' + '\t\t' + '[boolean]\r')
   console.log('\t--help\t\t      ' + 'Show help.' + '\t\t\t' + '[boolean]\n')
 }
 
@@ -117,7 +101,6 @@ const forkRepo = async (accessToken, url) => {
       owner: owner,
       repo: name,
     })
-    // console.log('done')
   } catch (err) {
     console.log(err.message)
   }
@@ -160,14 +143,11 @@ const getOldContent = async (accessToken, url) => {
     auth: accessToken,
   })
 
-  const obj = await octokit.request(
-    'GET /repos/{owner}/{repo}/contents/{path}',
-    {
-      owner: owner,
-      repo: name,
-      path: 'package.json',
-    }
-  )
+  const obj = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', {
+    owner: owner,
+    repo: name,
+    path: 'package.json',
+  })
   return obj
 }
 
@@ -178,15 +158,6 @@ const makeChanges = async (rand, accessToken, url, newPackage, sha) => {
     const octokit = new Octokit({
       auth: accessToken,
     })
-    // const obj = await octokit.request(
-    //   'GET /repos/{owner}/{repo}/contents/{path}',
-    //   {
-    //     owner: 'Vibhukumar10',
-    //     repo: name,
-    //     path: 'package.json',
-    //   }
-    // )
-    console.log(sha)
     await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
       owner: 'Vibhukumar10',
       repo: name,
@@ -212,13 +183,11 @@ const createPullRequest = async (
 ) => {
   const { owner, name } = gh(url)
 
-  console.log(owner, name)
-
   const octokit = new Octokit({
     auth: accessToken,
   })
 
-  await octokit.request('POST /repos/{owner}/{repo}/pulls', {
+  const obj = await octokit.request('POST /repos/{owner}/{repo}/pulls', {
     owner: owner,
     repo: name,
     title: `chore: update ${dependency}@${appVersion} to ${dependency}@${version}`,
@@ -226,6 +195,8 @@ const createPullRequest = async (
     head: `${userName}:update-dependency#${rand}`,
     base: 'main',
   })
+
+  return obj
 }
 
 module.exports = {
