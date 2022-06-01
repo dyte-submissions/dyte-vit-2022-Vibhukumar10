@@ -22,10 +22,10 @@ const getGithubApiCall = (url) => {
   }
 }
 
-const getDependencyList = async (url) => {
+const getDependencyList = async (accessToken, url) => {
   const { owner, name } = gh(url)
   const octokit = new Octokit({
-    // auth: accessToken,
+    auth: accessToken,
   })
 
   const obj = await octokit.request('GET /repos/{owner}/{repo}/contents/{path}', {
@@ -48,7 +48,12 @@ const getAppVersion = (obj, dependency, version) => {
       break
     }
   }
-  if (appVersion.charAt(0) < '0' || appVersion.charAt(0) > '9') {
+
+  if (appVersion == NaN) {
+    throw new Error('Dependency doesnt exist in this repository')
+  }
+
+  if (appVersion?.charAt(0) < '0' || appVersion?.charAt(0) > '9') {
     appVersion = appVersion.slice(1)
   }
 
@@ -76,8 +81,20 @@ const showHelp = () => {
   console.log('\t--help\t\t      ' + 'Show help.' + '\t\t\t' + '[boolean]\n')
 }
 
-const parseCsv = async (csvPath) => {
-  return await csv().fromFile(csvPath)
+const parseCsv = (csvPath) => {
+  // var stream = require('fs').createReadStream(csvPath)
+  // var reader = require('readline').createInterface({ input: stream })
+  // let arr = []
+  // reader.on('line', (row) => {
+  //   arr.push(row.split(','))
+  // })
+  // return arr
+  var data = require('fs').readFileSync(csvPath, 'utf8')
+  data = data.split('\r\n')
+  for (let i of data) {
+    data[i] = data[i].split(',')
+  }
+  console.log(data)
 }
 
 const getCsvPath = (csvFileName) => {
@@ -199,6 +216,40 @@ const createPullRequest = async (
   return obj
 }
 
+const getAppVersionCsv = (obj, dependency, version) => {
+  var appVersion
+  for (var key in obj) {
+    if (obj.hasOwnProperty(key) && key === dependency) {
+      //   console.log(obj[key])
+      appVersion = obj[key]
+      break
+    }
+  }
+
+  if (appVersion == NaN) {
+    return NaN
+  }
+
+  if (appVersion?.charAt(0) < '0' || appVersion?.charAt(0) > '9') {
+    appVersion = appVersion.slice(1)
+  }
+
+  // console.log(`\nShowing dependency versions for ${dependency}:`)
+  // console.log(chalk.blue(boxen(`current: ${appVersion}\nrequirement: ${version}`)))
+
+  // if (!compare(appVersion, version, '>=')) {
+  //   console.log(
+  //     chalk.red(
+  //       `${dependency}@${appVersion} DOESNOT satisfy ${dependency}@${version}\nPlease update using the -u flag`
+  //     )
+  //   )
+  // } else {
+  //   console.log(chalk.green('Your dependency is upto date :)'))
+  // }
+
+  return appVersion
+}
+
 module.exports = {
   getGithubApiCall,
   showHelp,
@@ -211,4 +262,5 @@ module.exports = {
   createPullRequest,
   makeChanges,
   getOldContent,
+  getAppVersionCsv,
 }

@@ -10,6 +10,9 @@ const csv = require('csvtojson')
 const utils = require('./utils.js')
 const usage = chalk.keyword('green')('\nUsage: rely <repo-url> <dependency@version>')
 
+var accessToken = prompt('Please enter your GitHub Person Access Token: ')
+var userName = prompt('Please enter your GitHub Username: ')
+
 const argv = yargs(process.argv.slice(2))
   .usage(
     'Usage: \n\nrely -r <repo-url> <dependency@version>\nrely -i <filname.csv> <dependency@version>'
@@ -40,31 +43,38 @@ if (argv.i && argv.r == null) {
   const [dependency, version] = argv.i[1].split('@')
   try {
     const csvPath = utils.getCsvPath(csvFileName)
-    ;async () => {
-      const data = await csv().fromFile(csvPath)
-      var rep = []
-      data.forEach((obj) => {
-        console.log(obj)
-        const getUrl = utils.getGithubApiCall(obj.repo)
+    const data = utils.parseCsv(csvPath)
+    console.log(data)
+    // ;(async () => {
+    //   const data = await csv().fromFile(csvPath)
+    //   data.forEach((obj) => {
+    //     console.log(obj)
+    //     const getUrl = utils.getGithubApiCall(obj.repo)
 
-        utils.getDependencyList(getUrl).then((content) => {
-          const appVersion = utils
-            .getAppVersion(
-              JSON.parse(Buffer.from(content.data.content, 'base64').toString('ascii'))
-                .dependencies,
-              dependency,
-              version
-            )
-            .toString()
+    //     const objj = await utils.getDependencyList(accessToken, getUrl)
+    //     console.log(objj);
 
-          rep.push({
-            version: appVersion,
-            satified: compare(appVersion, version, '>='),
-          })
-        })
-        console.log(rep)
-      })
-    }
+    //     utils.getDependencyList(accessToken, getUrl).then((content) => {
+    //       var appVersion = utils.getAppVersionCsv(
+    //         JSON.parse(Buffer.from(content.data.content, 'base64').toString('ascii')).dependencies,
+    //         dependency,
+    //         version
+    //       )
+
+    //       let rep = []
+    //       if (!appVersion) {
+    //         console.log('This repo doesnot contain dependency')
+    //       } else {
+    //         appVersion = appVersion.toString()
+    //         rep.push({
+    //           version: appVersion,
+    //           satified: compare(appVersion, version, '>='),
+    //         })
+    //       }
+    //       console.log(rep)
+    //     })
+    //   })
+    // })()
   } catch (err) {
     console.log(boxen(chalk.red(err.message)))
   }
@@ -79,7 +89,7 @@ if (argv.i && argv.r == null) {
     }
 
     utils
-      .getDependencyList(getUrl)
+      .getDependencyList(accessToken, getUrl)
       .then((data) => {
         const appVersion = utils
           .getAppVersion(
@@ -92,9 +102,6 @@ if (argv.i && argv.r == null) {
         var newPackage = JSON.parse(Buffer.from(data.data.content, 'base64').toString('ascii'))
 
         if (argv.u) {
-          var accessToken = prompt('Please enter your GitHub Person Access Token: ')
-          var userName = prompt('Please enter your GitHub Username: ')
-
           var obj = newPackage.dependencies
           for (var key in newPackage.dependencies) {
             if (obj.hasOwnProperty(key) && key === dependency) {
