@@ -14,10 +14,7 @@ const options = {
   maxConcurrentProcesses: 6,
 }
 
-// when setting all options in a single object
 const git = simpleGit(options)
-
-// console.log(yargs)
 
 const csv = require('csvtojson')
 
@@ -50,8 +47,6 @@ const argv = yargs(process.argv.slice(2))
   })
   .help(true).argv
 
-// console.log(argv)
-
 if (argv.i && argv.r == null) {
   const csvFileName = argv.i[0]
   try {
@@ -60,18 +55,6 @@ if (argv.i && argv.r == null) {
       const data = await csv().fromFile(csvPath)
       console.log(data)
     })()
-
-    // var fs = require('fs')
-
-    // var data = fs
-    //   .readFileSync(csvPath)
-    //   .toString() // convert Buffer to string
-    //   .split('\n') // split string to lines
-    //   .map((e) => e.trim()) // remove white spaces for each line
-    //   .map((e) => e.split(',').map((e) => e.trim())) // split each line to array
-
-    // console.log(data.slice(1))
-    // console.log(JSON.stringify(data, '', 2)) // as json
   } catch (err) {
     console.log(boxen(chalk.red(err.message)))
   }
@@ -85,6 +68,10 @@ if (argv.i && argv.r == null) {
     if (!validate(version)) {
       throw new Error('Please enter a valid version like: react@17.0.0')
     }
+
+    const oldContent = utils
+      .getOldContent('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', url)
+      .then((data) => data)
 
     utils
       .getDependencyList(getUrl)
@@ -110,10 +97,17 @@ if (argv.i && argv.r == null) {
         if (argv.u) {
           const accessToken = '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'
           try {
-            // utils.forkRepo(accessToken, url).then(() => console.log('forked'))
-            utils
-              .createBranch(accessToken, url)
-              .then(() => console.log('created'))
+            ;(async () => {
+              // const data = await csv().fromFile(csvPath)
+              await utils.forkRepo(accessToken, url)
+              console.log('forked')
+              await utils.createBranch(accessToken, url, 'Vibhukumar10')
+              console.log('branch created')
+              await utils.makeChanges(accessToken, url)
+              console.log('changes made')
+              await utils.createPullRequest(accessToken, url)
+              console.log('pull request made')
+            })()
           } catch (err) {
             console.log(err.message)
           }

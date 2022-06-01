@@ -119,50 +119,93 @@ const forkRepo = async (accessToken, url) => {
       owner: owner,
       repo: name,
     })
+    console.log('done')
   } catch (err) {
     console.log(err.message)
   }
-
-  // console.log('done')
-
-  // await octokit.request('POST /repos/{owner}/{repo}/git/refs', {
-  //   owner: 'Vibhukumar10',
-  //   repo: name,
-  //   ref: 'refs/heads/featureA',
-  //   sha: 'aa218f56b14c9653891f9e74264a383fa43fefbd',
-  // })
-
-  // const octokit = new Octokit({
-  //   auth: accessToken,
-  // })
-
-  // await octokit.request('POST /repos/{owner}/{repo}/pulls', {
-  //   owner: owner,
-  //   repo: name,
-  //   title: 'Amazing new feature',
-  //   body: 'Please pull these awesome changes in!',
-  //   head: 'octocat:new-feature',
-  //   base: 'master',
-  // })
 }
 
-const createBranch = async (accessToken, url) => {
+const createBranch = async (accessToken, url, user) => {
   const { owner, name } = gh(url)
 
-  try {
-    const octokit = new Octokit({
-      auth: accessToken,
-    })
+  const octokit = new Octokit({
+    auth: accessToken,
+  })
 
+  const obj = await octokit.request('GET /repos/{owner}/{repo}/commits/main', {
+    owner: owner,
+    repo: name,
+  })
+
+  console.log(obj.data.sha)
+
+  const latestSha = obj.data.sha
+
+  try {
     await octokit.request('POST /repos/{owner}/{repo}/git/refs', {
-      owner: owner,
+      owner: user,
       repo: name,
-      ref: 'refs/heads/featureA',
-      sha: 'aa218f56b14c9653891f9e74264a383fa43fefbe',
+      ref: 'refs/heads/update-dependency',
+      sha: latestSha,
     })
   } catch (err) {
     console.log(err)
   }
+}
+
+const getOldContent = async (accessToken, url) => {
+  const { owner, name } = gh(url)
+
+  const octokit = new Octokit({
+    auth: accessToken,
+  })
+
+  const obj = await octokit.request(
+    'GET /repos/{owner}/{repo}/contents/{path}',
+    {
+      owner: owner,
+      repo: name,
+      path: 'package.json',
+    }
+  )
+  return obj
+}
+
+const makeChanges = async (accessToken, url) => {
+  const { owner, name } = gh(url)
+
+  const octokit = new Octokit({
+    auth: accessToken,
+  })
+
+  await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+    owner: 'Vibhukumar10',
+    repo: name,
+    path: 'package.json',
+    message: 'a new commit message',
+    branch: 'update-dependency',
+    content: 'bXkgdXBkYXRlZCBmaWxlIGNvbnRlbnRz',
+    sha: 'bf0b9617f2c4f4e4152487762ca2a3c1e5a519e7',
+  })
+}
+
+const createPullRequest = async (accessToken, url) => {
+  const { owner, name } = gh(url)
+
+  console.log(owner, name)
+
+  const octokit = new Octokit({
+    auth: accessToken,
+  })
+
+  await octokit.request('POST /repos/{owner}/{repo}/pulls', {
+    owner: owner,
+    repo: name,
+    title: 'Amazing new feature',
+    body: 'Please pull these awesome changes in!',
+    head: 'Vibhukumar10:update-dependency',
+    base: 'main',
+  })
 }
 
 module.exports = {
@@ -174,4 +217,7 @@ module.exports = {
   getCsvPath,
   forkRepo,
   createBranch,
+  createPullRequest,
+  makeChanges,
+  getOldContent,
 }
